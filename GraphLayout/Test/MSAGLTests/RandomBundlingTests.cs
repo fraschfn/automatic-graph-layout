@@ -162,63 +162,31 @@ namespace Microsoft.Msagl.UnitTests {
             RsmContent();
         }
 
-        [Timeout(TestTimeout.Infinite)]
-        [TestMethod]
-        [Description("Random graph with groups")]
-        [DeploymentItem(@"Resources\MSAGLGeometryGraphs\graph0.msagl.geom")]
-        public void RouteEdges_SmallGroupsFromDisc() {
-            RsmContentFromDisc();
-        }
 
-        public static void RsmContentFromDisc() {
-            int ntest = 10000;
-            int iStart = 1; // 470;
-
+        public static void RsmContent() {
+            const int ntest = 70;
+            int iStart = 1;            
 #if TEST_MSAGL && TEST_MSAGL
             DisplayGeometryGraph.SetShowFunctions();
-#endif   
-            var graph = GeometryGraphReader.CreateFromFile(@"c:\tmp\graph0.msagl.geom");
-
+#endif
             for (int i = iStart; i < ntest; i++) {
                 Random random = new Random(i);
-             
-                double edgeSeparation = 5*random.NextDouble();
+                int multiplier = random.Next() % 5 + 1;
+                GeometryGraph graph = GenerateGraphWithGroups(random, multiplier);
+                SetRandomNodeShapes(graph, random);
+                Layout(graph, random);
+                // DisplayGeometryGraph.ShowGraph(graph);
+
+                double edgeSeparation = 5 * random.NextDouble();
                 System.Diagnostics.Debug.WriteLine("i={0} es={1}", i, edgeSeparation);
+                // GeometryGraphWriter.Write(graph, "c:\\tmp\\graph");
                 RouteEdges(graph, edgeSeparation);
                 // DisplayGeometryGraph.ShowGraph(graph);
 
                 //TODO: try to move it
             }
-
         }
-
-        public static void RsmContent()
-        {
-            const int ntest = 7000;
-            int iStart = 1;
-            for (int multiplier = 1; multiplier < 12; multiplier++)
-            {
-                System.Diagnostics.Debug.WriteLine("multiplier " + multiplier);
-#if TEST_MSAGL && TEST_MSAGL
-                DisplayGeometryGraph.SetShowFunctions();
-#endif
-                for (int i = iStart; i < ntest; i++) {
-                    Random random = new Random(i);
-                    GeometryGraph graph = GenerateGraphWithGroups(random, multiplier);
-                    SetRandomNodeShapes(graph, random);
-                    Layout(graph, random);
-                    // DisplayGeometryGraph.ShowGraph(graph);
-
-                    double edgeSeparation = 5 * random.NextDouble();
-                    System.Diagnostics.Debug.WriteLine("i={0} es={1}", i, edgeSeparation);
-                    GeometryGraphWriter.Write(graph, "c:\\tmp\\graph");
-                    RouteEdges(graph, edgeSeparation);
-                    //DisplayGeometryGraph.ShowGraph(graph);
-
-                    //TODO: try to move it
-                }
-            }            
-        }
+        
 
         static GeometryGraph GenerateGraphWithGroups(Random random, int multiplier)
         {
@@ -307,28 +275,16 @@ namespace Microsoft.Msagl.UnitTests {
 
         static bool Ancestor(Cluster root, Node node)
         {
-            if (node.ClusterParents.Contains(root))
+            if (node.ClusterParent == root)
                 return true;
-            var parents = new Queue<Cluster>(node.ClusterParents);
-            while (parents.Count > 0)
-            {
-                Cluster parent = parents.Dequeue();
-
-                if (root.Clusters.Contains(parent))
-                    return true;
-
-                foreach (Cluster grandParent in parent.ClusterParents)
-                    parents.Enqueue(grandParent);
-            }
-
-            return false;
+            return node.AllClusterAncestors.Any(p => p.ClusterParent == root);
         }
         
         static bool EdgeIsValid(Node snode, Node tnode)
         {
             if (snode == tnode) return false;
 
-            if (snode.ClusterParents.First() == tnode.ClusterParents.First())
+            if (snode.ClusterParent == tnode.ClusterParent)
                 return true;
             /*if (!(snode is Cluster) && snode.AllClusterAncestors.Contains(tnode))
                 return true;

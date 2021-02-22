@@ -13,19 +13,19 @@ namespace Microsoft.Msagl.Layout.Layered {
     /// </summary>
     internal class NetworkSimplex : AlgorithmBase, LayerCalculator {
 
-        static BasicGraph<IntEdge> CreateGraphWithIEEdges(BasicGraph<IntEdge> bg) {
-            List<IntEdge> ieEdges = new List<IntEdge>();
+        static BasicGraphOnEdges<PolyIntEdge> CreateGraphWithIEEdges(BasicGraphOnEdges<PolyIntEdge> bg) {
+            List<PolyIntEdge> ieEdges = new List<PolyIntEdge>();
 
-            foreach (IntEdge e in bg.Edges)
+            foreach (PolyIntEdge e in bg.Edges)
                 ieEdges.Add(new NetworkEdge(e));
 
-            return new BasicGraph<IntEdge>(ieEdges, bg.NodeCount);
+            return new BasicGraphOnEdges<PolyIntEdge>(ieEdges, bg.NodeCount);
         }
 
         int[] layers;
 
 
-        internal NetworkSimplex(BasicGraph<IntEdge> graph, CancelToken cancelToken)
+        internal NetworkSimplex(BasicGraphOnEdges<PolyIntEdge> graph, CancelToken cancelToken)
         {
             this.graph = CreateGraphWithIEEdges(graph);
             inTree = new bool[graph.NodeCount];
@@ -61,7 +61,7 @@ namespace Microsoft.Msagl.Layout.Layered {
 
             while (TightTree() < this.graph.NodeCount) {
 
-                IntEdge e = GetNonTreeEdgeIncidentToTheTreeWithMinimalAmountOfSlack();
+                PolyIntEdge e = GetNonTreeEdgeIncidentToTheTreeWithMinimalAmountOfSlack();
                 if (e == null)
                     break; //all edges are tree edges
                 int slack = Slack(e);
@@ -278,17 +278,14 @@ namespace Microsoft.Msagl.Layout.Layered {
             low = new int[graph.NodeCount];
             parent = new NetworkEdge[graph.NodeCount];
 
-            int curLim = 1;
-            int v = 0;
-
-            InitLowLimParentAndLeavesOnSubtree(ref curLim, ref v);
+            InitLowLimParentAndLeavesOnSubtree(1, 0);
         }
         /// <summary>
         /// initializes lim and low in the subtree 
         /// </summary>
         /// <param name="curLim">the root of the subtree</param>
         /// <param name="v">the low[v]</param>
-        private void InitLowLimParentAndLeavesOnSubtree(ref int curLim, ref int v) {
+        private void InitLowLimParentAndLeavesOnSubtree(int curLim, int v) {
             Stack<StackStruct> stack = new Stack<StackStruct>();
             IEnumerator outEnum = this.graph.OutEdges(v).GetEnumerator();
             IEnumerator inEnum = this.graph.InEdges(v).GetEnumerator();
@@ -369,12 +366,11 @@ namespace Microsoft.Msagl.Layout.Layered {
 
             }
 
-            int v = l;
-            InitLowLimParentAndLeavesOnSubtree(ref llow, ref v);
+            InitLowLimParentAndLeavesOnSubtree(llow, l);
 
         }
 
-        int Slack(IntEdge e) {
+        int Slack(PolyIntEdge e) {
             int ret = layers[e.Source] - layers[e.Target] - e.Separation;
 #if DEBUGNW
       if (ret < 0)
@@ -388,7 +384,7 @@ namespace Microsoft.Msagl.Layout.Layered {
         /// </summary>
         /// <returns></returns>
         NetworkEdge GetNonTreeEdgeIncidentToTheTreeWithMinimalAmountOfSlack() {
-            IntEdge eret = null;
+            PolyIntEdge eret = null;
             int minSlack = NetworkEdge.Infinity;
 
             foreach (int v in this.treeVertices) {
@@ -817,7 +813,7 @@ namespace Microsoft.Msagl.Layout.Layered {
         #endregion
 
   
-        BasicGraph<IntEdge> graph;
+        BasicGraphOnEdges<PolyIntEdge> graph;
         private CancelToken NetworkCancelToken;
 
 

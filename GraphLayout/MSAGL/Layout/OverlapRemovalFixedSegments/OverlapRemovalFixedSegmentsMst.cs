@@ -539,7 +539,7 @@ namespace Microsoft.Msagl.Layout.OverlapRemovalFixedSegments
 
         public TreeNode GetRandom(List<TreeNode> nodes)
         {
-            Random rand = new Random();
+            Random rand = new Random(1);
             int i = rand.Next(0, nodes.Count);
             return nodes[i];
         }
@@ -752,7 +752,7 @@ namespace Microsoft.Msagl.Layout.OverlapRemovalFixedSegments
                 ////test: small chance of extanding edge instead of contracting
                 //if (contractingEdge && a1 <= a2)
                 //{
-                //    Random rnd = new Random();
+                //    Random rnd = new Random(1);
                 //    int r = rnd.Next(0, 100);
                 //    if (r < 50)
                 //    {
@@ -871,7 +871,7 @@ namespace Microsoft.Msagl.Layout.OverlapRemovalFixedSegments
                 int targetId = pointToTreeNode[edge.B].id;
                 intEdges.Add(new SimpleIntEdge { Source = sourceId, Target = targetId });                              
             }
-            var components = ConnectedComponentCalculator<SimpleIntEdge>.GetComponents(new BasicGraph<SimpleIntEdge>(intEdges, pointToTreeNode.Count));
+            var components = ConnectedComponentCalculator<SimpleIntEdge>.GetComponents(new BasicGraphOnEdges<SimpleIntEdge>(intEdges, pointToTreeNode.Count));
 
             foreach (var component in components)
             {
